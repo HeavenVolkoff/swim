@@ -12,7 +12,7 @@
   customManagers: [
     {
       customType: "regex",
-      managerFilePatterns: ["^build\\.zig\\.zon$"],
+      fileMatch: ["^build\\.zig\\.zon$"],
       matchStrings: [
         "https?://github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentValue>[^/]+)\\.tar\\.gz",
       ],

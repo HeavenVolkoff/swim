@@ -1015,11 +1015,6 @@ test "valid packages round trip through the compound file" {
 test "invalid configurations are rejected" {
     const allocator = testing.allocator;
     const files = testFiles();
-    const file = struct {
-        fn one(subpath: []const u8) []const FileInput {
-            return &.{.{ .target_subpath = subpath, .content = "" }};
-        }
-    }.one;
     const bad = [_]struct { Config, anyerror }{
         .{ .{ .name = "", .files = files }, error.InvalidName },
         .{ .{ .name = "A/B", .files = files }, error.InvalidName },
@@ -1033,10 +1028,22 @@ test "invalid configurations are rejected" {
         .{ .{ .name = "App", .version = "256.0", .files = files }, error.InvalidVersion },
         .{ .{ .name = "App", .version = "1.2.3.4.5", .files = files }, error.InvalidVersion },
         .{ .{ .name = "App", .files = &.{} }, error.NoFiles },
-        .{ .{ .name = "App", .files = file("../x") }, error.InvalidTargetPath },
-        .{ .{ .name = "App", .files = file("/abs") }, error.InvalidTargetPath },
-        .{ .{ .name = "App", .files = file("a\\b") }, error.InvalidTargetPath },
-        .{ .{ .name = "App", .files = file("a//b") }, error.InvalidTargetPath },
+        .{
+            .{ .name = "App", .files = &.{.{ .target_subpath = "../x", .content = "" }} },
+            error.InvalidTargetPath,
+        },
+        .{
+            .{ .name = "App", .files = &.{.{ .target_subpath = "/abs", .content = "" }} },
+            error.InvalidTargetPath,
+        },
+        .{
+            .{ .name = "App", .files = &.{.{ .target_subpath = "a\\b", .content = "" }} },
+            error.InvalidTargetPath,
+        },
+        .{
+            .{ .name = "App", .files = &.{.{ .target_subpath = "a//b", .content = "" }} },
+            error.InvalidTargetPath,
+        },
         .{ .{ .name = "App", .icon = "", .files = files }, error.InvalidIcon },
         .{
             .{ .name = "App", .files = &.{

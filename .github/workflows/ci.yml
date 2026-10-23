@@ -66,7 +66,7 @@ jobs:
             platform: windows-x64
             arch: x64
           - name: Windows 11 ARM64
-            os: windows-11-arm64
+            os: windows-11-arm
             platform: windows-arm64
             arch: arm64
     steps:

@@ -45,7 +45,7 @@ jobs:
           for entry in "${targets[@]}"; do
             IFS=':' read -r target bin_name archive_type name <<< "$entry"
             echo "::group::Building $name for $target"
-            zig build -Dtarget="$target" -Doptimize=ReleaseFast
+            zig build -Dtarget="$target" -Doptimize=ReleaseSmall
 
             pkg_dir="package/$name"
             mkdir -p "$pkg_dir"

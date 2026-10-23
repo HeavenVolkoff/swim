@@ -25,8 +25,8 @@
     "args": ["build"]
   },
   {
-    "label": "zig build (ReleaseFast)",
+    "label": "zig build (ReleaseSmall)",
     "command": "zig",
-    "args": ["build", "-Doptimize=ReleaseFast"]
+    "args": ["build", "-Doptimize=ReleaseSmall"]
   }
 ]

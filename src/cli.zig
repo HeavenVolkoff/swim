@@ -2,10 +2,11 @@
 
 const std = @import("std");
 const clap = @import("clap");
+const swim = @import("swim");
 const mem = std.mem;
 const Allocator = mem.Allocator;
 
-const builder = @import("builder.zig");
+const builder = swim.builder;
 
 /// CLI specification.
 pub const params = clap.parseParamsComptime(

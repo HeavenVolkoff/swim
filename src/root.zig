@@ -11,8 +11,6 @@
 //!   Format (MS-CFB) container; `stream_name` mangles table and stream names;
 //!   `summary_info` writes the OLE `\x05SummaryInformation` property stream
 //!   (MS-OLEPS); `cab` packs payload files into an embedded MS-CAB archive.
-//! - Command-line interface: `cli` parses command-line flags and file
-//!   specifications into a package build request.
 
 const std = @import("std");
 
@@ -32,8 +30,6 @@ pub const schema = @import("schema.zig");
 pub const builder = @import("builder.zig");
 /// Built-in Windows Installer UI wizard dialogs, controls, and RTF conversion.
 pub const ui = @import("ui.zig");
-/// Command-line argument parser and help formatter.
-pub const cli = @import("cli.zig");
 /// Windows Authenticode code signing engine for MSI packages and PE binaries.
 pub const authenticode = @import("authenticode.zig");
 

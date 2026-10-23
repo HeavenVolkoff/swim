@@ -206,7 +206,7 @@ Requires [**Zig 0.17.0**][zig-download].
 
 ```bash
 # Build the swim binary for host
-zig build -Doptimize=ReleaseFast
+zig build -Doptimize=ReleaseSmall
 
 # The executable will be at:
 ./zig-out/bin/swim
@@ -214,20 +214,17 @@ zig build -Doptimize=ReleaseFast
 
 ### Cross-Compilation
 
-`swim` cross-compiles and is tested on the following platforms:
+`swim` cross-compiles and is tested on the following platforms targets:
+
+- `x86_64-linux`
+- `aarch64-linux`
+- `x86_64-windows`
+- `aarch64-windows`
+- `x86_64-macos`
+- `aarch64-macos`
 
 ```bash
-# Linux
-zig build -Dtarget=x86_64-linux
-zig build -Dtarget=aarch64-linux
-
-# Windows
-zig build -Dtarget=x86_64-windows
-zig build -Dtarget=aarch64-windows
-
-# macOS
-zig build -Dtarget=x86_64-macos
-zig build -Dtarget=aarch64-macos
+zig build -Doptimize=ReleaseSmall -Dtarget='<TARGET>'
 ```
 
 ## Development

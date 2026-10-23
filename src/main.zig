@@ -2,8 +2,13 @@
 
 const std = @import("std");
 const swim = @import("swim");
+const cli = @import("cli.zig");
 
-const cli = swim.cli;
+pub const std_options: std.Options = .{
+    .enable_segfault_handler = @import("builtin").mode == .debug,
+    .signal_stack_size = if (@import("builtin").mode == .debug) 1 << 18 else null,
+    .allow_stack_tracing = !@import("builtin").strip_debug_info,
+};
 
 /// Prints a formatted diagnostic message prefixed with `swim: ` to `stderr`
 /// and terminates the process with exit code 1.

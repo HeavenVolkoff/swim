@@ -126,7 +126,7 @@ jobs:
         run: zig build test --summary all
 
       - name: Build swim executable
-        run: zig build -Doptimize=ReleaseFast
+        run: zig build -Doptimize=ReleaseSmall
 
       - name: Execute primary E2E tests for ${{ matrix.arch }}
         if: runner.os == 'Windows'
@@ -204,7 +204,7 @@ jobs:
           )
           for target in "${targets[@]}"; do
             echo "::group::Compiling for $target"
-            zig build -Dtarget="$target" -Doptimize=ReleaseFast
+            zig build -Dtarget="$target" -Doptimize=ReleaseSmall
             ls -la zig-out/bin/
             echo "::endgroup::"
           done

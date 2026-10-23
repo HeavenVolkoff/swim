@@ -17,6 +17,7 @@
         "github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentDigest>[0-9a-f]{40})\\.tar\\.gz",
       ],
       datasourceTemplate: "git-refs",
+      packageNameTemplate: "https://github.com/{{{depName}}}.git",
       versioningTemplate: "git"
     },
     {

@@ -1,0 +1,47 @@
+{
+  "preferred_line_length": 100,
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.DS_Store",
+    "**/.zig-cache",
+    "**/zig-out",
+    "**/*.msi",
+    "**/*.cab",
+    "test_fixtures/*.exe",
+    "test_fixtures/*.dll",
+    "test_fixtures/*.ico"
+  ],
+  "languages": {
+    "Zig": {
+      "tab_size": 4,
+      "hard_tabs": false,
+      "format_on_save": "on",
+      "formatter": "language_server",
+      "inlay_hints": {
+        "enabled": true
+      }
+    },
+    "Markdown": {
+      "tab_size": 2,
+      "hard_tabs": false,
+      "preferred_line_length": 100,
+      "soft_wrap": "prefer_line"
+    }
+  },
+  "lsp": {
+    "markdownlint": {
+      "initialization_options": {
+        "config": {
+          "MD013": {
+            "line_length": 100
+          }
+        }
+      }
+    },
+    "zls": {
+      "binary": {
+        "arguments": ["--config-path", "zls.json"]
+      }
+    }
+  }
+}

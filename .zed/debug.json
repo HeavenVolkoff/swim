@@ -1,0 +1,30 @@
+[
+  {
+    "label": "Debug swim (test_fixtures)",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/zig-out/bin/swim",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": [
+      "-n",
+      "SampleApp",
+      "-v",
+      "1.0.0",
+      "-m",
+      "Swim",
+      "-l",
+      "test_fixtures/LICENSE.txt",
+      "-i",
+      "test_fixtures/app.ico",
+      "-o",
+      "zig-out/SampleApp.msi",
+      "test_fixtures/mock.exe",
+      "test_fixtures/mock.dll",
+      "test_fixtures/readme.txt:docs/readme.txt"
+    ],
+    "build": {
+      "command": "zig",
+      "args": ["build"]
+    }
+  }
+]

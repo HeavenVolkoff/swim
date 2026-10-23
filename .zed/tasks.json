@@ -1,0 +1,32 @@
+[
+  {
+    "label": "zig build test",
+    "command": "zig",
+    "args": ["build", "test", "--summary", "all"]
+  },
+  {
+    "label": "zig build lint",
+    "command": "zig",
+    "args": ["build", "lint", "--summary", "all"]
+  },
+  {
+    "label": "zig build check",
+    "command": "zig",
+    "args": ["build", "check", "--summary", "all"]
+  },
+  {
+    "label": "zig build fmt",
+    "command": "zig",
+    "args": ["build", "fmt"]
+  },
+  {
+    "label": "zig build (Debug)",
+    "command": "zig",
+    "args": ["build"]
+  },
+  {
+    "label": "zig build (ReleaseFast)",
+    "command": "zig",
+    "args": ["build", "-Doptimize=ReleaseFast"]
+  }
+]

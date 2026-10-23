@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <a href="./releases/latest"><strong>Download</strong></a> &bull;
+  <a href="https://github.com/HeavenVolkoff/swim/releases/latest"><strong>Download</strong></a> &bull;
   <a href="#examples">Examples</a> &bull;
   <a href="#build">Build from source</a>
 </p>

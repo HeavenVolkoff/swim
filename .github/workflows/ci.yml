@@ -98,7 +98,8 @@ jobs:
         if: runner.os == 'Windows' && matrix.arch == 'x64'
         shell: powershell
         run: |
-          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe -TargetArch arm64
+          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe `
+            -TargetArch arm64 -IncompatibleTest
 
       - name: Execute x64 emulation MSI test (Windows 11 ARM64 only)
         if: runner.os == 'Windows' && matrix.arch == 'arm64'

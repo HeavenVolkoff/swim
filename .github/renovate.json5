@@ -8,13 +8,23 @@
   minimumReleaseAge: "3 days",
   labels: ["dependencies"],
 
-  // Custom regex manager for build.zig.zon dependencies
+  // Custom regex managers for build.zig.zon dependencies
   customManagers: [
     {
       customType: "regex",
-      fileMatch: ["^build\\.zig\\.zon$"],
+      managerFilePatterns: ["/^build\\.zig\\.zon$/"],
       matchStrings: [
-        "https?://github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentValue>[^/]+)\\.tar\\.gz",
+        "github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentDigest>[0-9a-f]{40})\\.tar\\.gz",
+      ],
+      datasourceTemplate: "git-refs",
+      versioningTemplate: "git"
+    },
+    {
+      customType: "regex",
+      managerFilePatterns: ["/^build\\.zig\\.zon$/"],
+      matchStrings: [
+        "github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentValue>v?[0-9]+\\.[^/]+)\\.tar\\.gz",
+        "(?<depName>[^/]+/[^/]+)/archive/refs/tags/(?<currentValue>v?[0-9]+\\.[^/]+)\\.tar\\.gz",
       ],
       datasourceTemplate: "github-tags",
       versioningTemplate: "semver"

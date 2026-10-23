@@ -6,9 +6,21 @@ name: CI
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'tests/**'
+      - 'test_fixtures/**'
+      - 'scripts/**'
+      - 'build.zig'
+      - 'build.zig.zon'
+      - '.github/workflows/ci.yml'
+      - '.gitattributes'
+      - '!**/*.md'
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,10 +28,41 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect File Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code == 'true' || github.event_name != 'pull_request' }}
+    steps:
+      - name: Check modified paths
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          predicate-quantifier: 'some-with-excludes'
+          filters: |
+            code:
+              - 'src/**'
+              - 'test/**'
+              - 'tests/**'
+              - 'test_fixtures/**'
+              - 'scripts/**'
+              - 'build.zig'
+              - 'build.zig.zon'
+              - '.github/workflows/ci.yml'
+              - '.gitattributes'
+              - '!**/*.md'
+
   quality:
     name: Code Quality & Formatting
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -39,7 +82,10 @@ jobs:
 
   unit-tests:
     name: Unit Tests (${{ matrix.name }})
-    needs: quality
+    needs:
+      - changes
+      - quality
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -132,7 +178,10 @@ jobs:
 
   cross-compile:
     name: Cross-Compilation Validation
-    needs: quality
+    needs:
+      - changes
+      - quality
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -162,7 +211,10 @@ jobs:
 
   determinism-verify:
     name: Compare Deterministic Hashes
-    needs: unit-tests
+    needs:
+      - changes
+      - unit-tests
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Download all hash artifacts
@@ -183,3 +235,56 @@ jobs:
             fi
           done
           echo "Deterministic verification passed: identical MSI generated across all OSes."
+
+  ci:
+    name: CI
+    needs:
+      - changes
+      - quality
+      - unit-tests
+      - cross-compile
+      - determinism-verify
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify all required checks
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          CHANGES_CODE: ${{ needs.changes.outputs.code }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          TESTS_RESULT: ${{ needs.unit-tests.result }}
+          CROSS_RESULT: ${{ needs.cross-compile.result }}
+          DETERMINISM_RESULT: ${{ needs.determinism-verify.result }}
+        run: |
+          set -euo pipefail
+          echo "Changes detection result: $CHANGES_RESULT (code: $CHANGES_CODE)"
+          echo "Quality check result: $QUALITY_RESULT"
+          echo "Unit tests result: $TESTS_RESULT"
+          echo "Cross-compile result: $CROSS_RESULT"
+          echo "Determinism verify result: $DETERMINISM_RESULT"
+
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "::error::Changes detection job failed or was cancelled."
+            exit 1
+          fi
+
+          if [ "$CHANGES_CODE" = "true" ]; then
+            failed=0
+            for job in "Quality:$QUALITY_RESULT" \
+                       "UnitTests:$TESTS_RESULT" \
+                       "CrossCompile:$CROSS_RESULT" \
+                       "Determinism:$DETERMINISM_RESULT"; do
+              name="${job%%:*}"
+              res="${job##*:}"
+              if [ "$res" != "success" ]; then
+                echo "::error::$name check did not succeed (status: $res)"
+                failed=1
+              fi
+            done
+            if [ "$failed" -ne 0 ]; then
+              exit 1
+            fi
+            echo "All CI checks completed successfully for code changes."
+          else
+            echo "No code changes detected; CI checks bypassed successfully."
+          fi

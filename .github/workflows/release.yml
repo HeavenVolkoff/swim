@@ -50,7 +50,7 @@ jobs:
             pkg_dir="package/$name"
             mkdir -p "$pkg_dir"
             cp "zig-out/bin/$bin_name" "$pkg_dir/"
-            cp README.md LICENSE.txt "$pkg_dir/"
+            cp README.md LICENSE "$pkg_dir/"
 
             if [ "$archive_type" = "zip" ]; then
               (cd package && zip -r "../dist/$name.zip" "$name")
@@ -64,7 +64,7 @@ jobs:
       - name: Compute SHA256SUMS
         run: |
           cd dist
-          sha256sum * > SHA256SUMS
+          sha256sum swim-* > SHA256SUMS
           echo "Computed checksums:"
           cat SHA256SUMS
 

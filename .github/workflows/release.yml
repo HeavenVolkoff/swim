@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+
+name: Release
+
+"on":
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      - name: Cross-compile release binaries and package archives
+        run: |
+          set -euo pipefail
+          mkdir -p dist package
+
+          targets=(
+            "x86_64-linux-musl:swim:tar.gz:swim-x86_64-linux"
+            "aarch64-linux-musl:swim:tar.gz:swim-aarch64-linux"
+            "x86_64-macos-none:swim:tar.gz:swim-x86_64-macos"
+            "aarch64-macos-none:swim:tar.gz:swim-aarch64-macos"
+            "x86_64-windows-gnu:swim.exe:zip:swim-x86_64-windows"
+            "aarch64-windows-gnu:swim.exe:zip:swim-aarch64-windows"
+            "x86-windows-gnu:swim.exe:zip:swim-x86-windows"
+          )
+
+          for entry in "${targets[@]}"; do
+            IFS=':' read -r target bin_name archive_type name <<< "$entry"
+            echo "::group::Building $name for $target"
+            zig build -Dtarget="$target" -Doptimize=ReleaseFast
+
+            pkg_dir="package/$name"
+            mkdir -p "$pkg_dir"
+            cp "zig-out/bin/$bin_name" "$pkg_dir/"
+            cp README.md LICENSE.txt "$pkg_dir/"
+
+            if [ "$archive_type" = "zip" ]; then
+              (cd package && zip -r "../dist/$name.zip" "$name")
+            else
+              tar -czf "dist/$name.tar.gz" -C package "$name"
+            fi
+            rm -rf "$pkg_dir"
+            echo "::endgroup::"
+          done
+
+      - name: Compute SHA256SUMS
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS
+          echo "Computed checksums:"
+          cat SHA256SUMS
+
+      - name: Attest build provenance (SLSA)
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: 'dist/*'
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false

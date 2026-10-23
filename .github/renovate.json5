@@ -1,0 +1,35 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommits"
+  ],
+  minimumReleaseAge: "3 days",
+  labels: ["dependencies"],
+
+  // Custom regex manager for build.zig.zon dependencies
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["^build\\.zig\\.zon$"],
+      matchStrings: [
+        "https?://github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentValue>[^/]+)\\.tar\\.gz",
+      ],
+      datasourceTemplate: "github-tags",
+      versioningTemplate: "semver"
+    }
+  ],
+
+  packageRules: [
+    {
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions",
+      schedule: ["before 6:00 am on monday"]
+    },
+    {
+      matchManagers: ["custom.regex"],
+      groupName: "Zig Dependencies"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+
+name: Renovate Zig Hash Fixup
+
+"on":
+  pull_request:
+    paths:
+      - 'build.zig.zon'
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  fixup-hash:
+    name: Recalculate Zig Dependency Hashes
+    if: github.actor == 'renovate[bot]' || startsWith(github.head_ref, 'renovate/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      - name: Update dependency hashes
+        run: |
+          python3 scripts/update-zon-hashes.py
+
+      - name: Commit updated hashes to PR branch
+        uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7.2.1
+        with:
+          commit_message: "chore(deps): update build.zig.zon dependency hashes [skip ci]"
+          file_pattern: 'build.zig.zon'

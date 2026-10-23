@@ -4,7 +4,8 @@ This directory contains cryptographic test fixtures for developing and testing c
 support in `swim` (specifically Windows Authenticode signatures on `.msi` packages and binaries).
 
 > [!CAUTION]
-> The private keys in this directory are [publicly known test vectors with trivial private scalars][we-have-a-problem].
+> The private keys in this directory are
+> [publicly known test vectors with trivial private scalars][we-have-a-problem].
 > They are intended **exclusively for local offline unit testing and development**. Never trust,
 > install in Windows certificate stores, or use these certificates in production.
 

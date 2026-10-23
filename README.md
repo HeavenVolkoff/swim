@@ -20,18 +20,26 @@
 
 <p align="center">
   <a href="https://mit-license.org">
-    <img src="https://img.shields.io/static/v1?label=License&message=MIT&color=000&style=for-the-badge" alt="Apache-2.0 license" />
+    <img
+      src="https://img.shields.io/static/v1?label=License&message=MIT&color=000&style=for-the-badge"
+      alt="Apache-2.0 license" />
   </a>
   <a href="https://en.wikipedia.org/wiki/AI-assisted_software_development">
-    <img src="https://img.shields.io/badge/✨AI-assisted-2F6BFF?style=for-the-badge" alt="Software was developed with AI assistance" />
+    <img
+      src="https://img.shields.io/badge/✨AI-assisted-2F6BFF?style=for-the-badge"
+      alt="Software was developed with AI assistance" />
   </a>
   <a href="https://ziglang.org/documentation/0.17.0">
-    <img src="https://img.shields.io/badge/Zig-0.17-2A2A2A?logo=zig&style=for-the-badge" alt="Developed with Zig 0.17" />
+    <img
+      src="https://img.shields.io/badge/Zig-0.17-2A2A2A?logo=zig&style=for-the-badge"
+      alt="Developed with Zig 0.17" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/HeavenVolkoff/swim/releases/latest"><strong>Download</strong></a> &bull;
+  <a href="https://github.com/HeavenVolkoff/swim/releases/latest">
+    <strong>Download</strong>
+  </a> &bull;
   <a href="#examples">Examples</a> &bull;
   <a href="#build">Build from source</a>
 </p>
@@ -64,8 +72,8 @@
   - RFC 3161 compliant HTTP timestamping (`--timestamp-url`).
 - **Custom File Placement:** Allows custom file placement relative to the install directory
   through `<source>:<destination>`.
-- **Main Exe Shortcut Creation:** Detects the main exe, first passed as `<file>`, or assigned manually
-  with `--main <path>`, and creates Desktop/Start Menu shortcuts during installation.
+- **Main Exe Shortcut Creation:** Detects the main exe, first passed as `<file>`, or assigned
+  manually with `--main <path>`, and creates Desktop/Start Menu shortcuts during installation.
 - **Desktop/Start Menu Shortcuts Control:** Allow users to opt out of creating Desktop and
   Start Menu shortcuts during installation.
 - **Lightweight UI Customization:**

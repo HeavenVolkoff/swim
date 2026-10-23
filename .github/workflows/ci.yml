@@ -1,0 +1,184 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+
+name: CI
+
+"on":
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Code Quality & Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      - name: Verify source formatting
+        run: zig build check-fmt
+
+      - name: Verify compilation without emitting binaries
+        run: zig build check
+
+      - name: Run linter and static analysis
+        run: zig build lint
+
+  unit-tests:
+    name: Unit Tests (${{ matrix.name }})
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-26.04
+            platform: linux-x64
+            arch: x64
+          - name: Linux ARM64
+            os: ubuntu-26.04-arm
+            platform: linux-arm64
+            arch: arm64
+          - name: macOS 26 ARM64
+            os: macos-26
+            platform: macos-arm64
+            arch: arm64
+          - name: macOS 26 x64
+            os: macos-26-intel
+            platform: macos-x64
+            arch: x64
+          - name: Windows Server x64
+            os: windows-2025
+            platform: windows-x64
+            arch: x64
+          - name: Windows 11 ARM64
+            os: windows-11-arm64
+            platform: windows-arm64
+            arch: arm64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      - name: Run unit test suite
+        run: zig build test --summary all
+
+      - name: Build swim executable
+        run: zig build -Doptimize=ReleaseFast
+
+      - name: Execute primary E2E tests for ${{ matrix.arch }}
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe -TargetArch ${{ matrix.arch }}
+
+      - name: Execute 32-bit x86 MSI test (Windows Server x64 only)
+        if: runner.os == 'Windows' && matrix.arch == 'x64'
+        shell: powershell
+        run: |
+          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe -TargetArch x86
+
+      - name: Execute incompatible architecture rejection test (arm64 package on x64 runner)
+        if: runner.os == 'Windows' && matrix.arch == 'x64'
+        shell: powershell
+        run: |
+          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe -TargetArch arm64
+
+      - name: Execute x64 emulation MSI test (Windows 11 ARM64 only)
+        if: runner.os == 'Windows' && matrix.arch == 'arm64'
+        shell: powershell
+        run: |
+          .\scripts\e2e-test.ps1 -SwimPath .\zig-out\bin\swim.exe -TargetArch x64
+
+      - name: Build deterministic test package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          ./zig-out/bin/swim -n DeterminismApp test_fixtures/mock.exe \
+            -t 1700000000 -o deterministic.msi
+          shasum -a 256 deterministic.msi | cut -d ' ' -f 1 > hash-${{ matrix.platform }}.txt
+
+      - name: Build deterministic test package (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          .\zig-out\bin\swim.exe -n DeterminismApp test_fixtures\mock.exe `
+            -t 1700000000 -o deterministic.msi
+          (Get-FileHash -Path deterministic.msi -Algorithm SHA256).Hash.ToLower() |
+            Out-File -FilePath hash-${{ matrix.platform }}.txt -NoNewline -Encoding ascii
+
+      - name: Upload hash artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: msi-hash-${{ matrix.platform }}
+          path: hash-${{ matrix.platform }}.txt
+          retention-days: 1
+
+  cross-compile:
+    name: Cross-Compilation Validation
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      - name: Compile for all supported targets
+        run: |
+          set -euo pipefail
+          targets=(
+            x86_64-linux-musl
+            aarch64-linux-musl
+            x86_64-macos-none
+            aarch64-macos-none
+            x86_64-windows-gnu
+            aarch64-windows-gnu
+            x86-windows-gnu
+          )
+          for target in "${targets[@]}"; do
+            echo "::group::Compiling for $target"
+            zig build -Dtarget="$target" -Doptimize=ReleaseFast
+            ls -la zig-out/bin/
+            echo "::endgroup::"
+          done
+
+  determinism-verify:
+    name: Compare Deterministic Hashes
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all hash artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+
+      - name: Assert byte-for-byte identity across OSes
+        run: |
+          hashes=(msi-hash-*/hash-*.txt)
+          first=$(cat "${hashes[0]}" | tr -d '[:space:]')
+          echo "Baseline hash (${hashes[0]}): $first"
+
+          for f in "${hashes[@]}"; do
+            h=$(cat "$f" | tr -d '[:space:]')
+            echo "Checking $f: $h"
+            if [ "$h" != "$first" ]; then
+              echo "::error::Determinism failure! $f differs from baseline ($h != $first)"
+              exit 1
+            fi
+          done
+          echo "Deterministic verification passed: identical MSI generated across all OSes."
